@@ -29,7 +29,7 @@ const App = () =>{
     <BrowserRouter>
       <Routes>
         <Route path="/" element={isAuthenticated ? <Navigate to="/home" /> : <Login />} />
-        <Route path="/signup" element={isAuthenticated ? <Navigate to="/home" /> : <Signup />} />y
+        <Route path="/signup" element={isAuthenticated ? <Navigate to="/home" /> : <Signup />} />
         <Route path="/home" element={isAuthenticated ? <Home /> : <Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

@@ -5,10 +5,11 @@ const API = {
   SIGNUP: `${BASE_URL}/auth/signup`,
   BOARDS: `${BASE_URL}/board`,
   CREATE_BOARD: `${BASE_URL}/board`,
-  DELETE_BOARD: (boardId) => `${BASE_URL}/boards/${boardId}`,
-  ADD_CARD: (boardId) => `${BASE_URL}/task`,
-  DELETE_CARD: (boardId, cardId) => `${BASE_URL}/task/${boardId}`,
-  UPDATE_CARD: (boardId, cardId) => `${BASE_URL}/task/${boardId}`,
+  DELETE_BOARD: (boardId) => `${BASE_URL}/board/${boardId}`,
+  ADD_CARD: `${BASE_URL}/task`,
+  DELETE_CARD: (cardId) => `${BASE_URL}/task/${cardId}`,
+  UPDATE_CARD: (cardId) => `${BASE_URL}/task/${cardId}`,
+  REORDER_CARDS: `${BASE_URL}/task/reorder/bulk`
 };
 
 export default API;
