@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiX, FiCalendar, FiCheckSquare, FiTrash2, FiPlus, FiAlertCircle, FiMessageSquare, FiPaperclip } from "react-icons/fi";
+import { FiX, FiCalendar, FiCheckSquare, FiTrash2, FiPlus, FiAlertCircle, FiMessageSquare, FiPaperclip, FiActivity } from "react-icons/fi";
 import Cookies from "js-cookie";
 import axios from "axios";
 import styles from "./TaskModal.module.css";
@@ -13,9 +13,10 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
   const [newSubtask, setNewSubtask] = useState("");
   const [comments, setComments] = useState(card.comments || []);
   const [newComment, setNewComment] = useState("");
-  
-  // Attachments States
   const [attachments, setAttachments] = useState(card.attachments || []);
+  
+  // Activities logs states
+  const [activities, setActivities] = useState(card.activities || []);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   useEffect(() => {
@@ -26,6 +27,7 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
     setSubtasks(card.tasks || []);
     setComments(card.comments || []);
     setAttachments(card.attachments || []);
+    setActivities(card.activities || []);
   }, [card]);
 
   const handleSave = (updatedFields) => {
@@ -37,6 +39,7 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
       tasks: subtasks,
       comments,
       attachments,
+      activities,
       ...updatedFields
     });
   };
@@ -123,7 +126,11 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
         }
       });
       setAttachments(res.data.attachments || []);
-      updateCard(columnId, card.id, { attachments: res.data.attachments || [] });
+      setActivities(res.data.activities || []);
+      updateCard(columnId, card.id, { 
+        attachments: res.data.attachments || [],
+        activities: res.data.activities || []
+      });
     } catch (err) {
       console.error("Error uploading file attachment:", err);
       alert("Upload failed. Make sure the file is less than 10MB.");
@@ -147,7 +154,11 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAttachments(res.data.attachments || []);
-      updateCard(columnId, card.id, { attachments: res.data.attachments || [] });
+      setActivities(res.data.activities || []);
+      updateCard(columnId, card.id, { 
+        attachments: res.data.attachments || [],
+        activities: res.data.activities || []
+      });
     } catch (err) {
       console.error("Error deleting file attachment:", err);
     }
@@ -160,6 +171,35 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+  };
+
+  // Activity Messages Formatter
+  const renderActivityMessage = (act) => {
+    const user = act.user?.email || "Someone";
+    switch (act.actionType) {
+      case "CREATE":
+        return <span><strong>{user}</strong> created this card.</span>;
+      case "MOVE":
+        return <span><strong>{user}</strong> moved card from <strong>{act.details?.from}</strong> to <strong>{act.details?.to}</strong>.</span>;
+      case "UPDATE_PRIORITY":
+        return <span><strong>{user}</strong> changed priority from <strong>{act.details?.from}</strong> to <strong>{act.details?.to}</strong>.</span>;
+      case "UPDATE_DUE_DATE":
+        return <span><strong>{user}</strong> changed due date to <strong>{act.details?.to === "None" ? "no due date" : act.details?.to}</strong>.</span>;
+      case "CHECKLIST_ADD":
+        return <span><strong>{user}</strong> added checklist step <em>"{act.details?.itemText}"</em>.</span>;
+      case "CHECKLIST_DELETE":
+        return <span><strong>{user}</strong> deleted checklist step <em>"{act.details?.itemText}"</em>.</span>;
+      case "CHECKLIST_TOGGLE":
+        return <span><strong>{user}</strong> marked checklist step <em>"{act.details?.itemText}"</em> as <strong>{act.details?.to.toLowerCase()}</strong>.</span>;
+      case "EDIT_TITLE":
+        return <span><strong>{user}</strong> renamed card to <em>"{act.details?.to}"</em>.</span>;
+      case "EDIT_DESCRIPTION":
+        return <span><strong>{user}</strong> updated description.</span>;
+      case "ADD_COMMENT":
+        return <span><strong>{user}</strong> commented <em>"{act.details?.itemText}"</em>.</span>;
+      default:
+        return <span><strong>{user}</strong> edited task card.</span>;
+    }
   };
 
   return (
@@ -320,6 +360,25 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
               </div>
             </div>
 
+            {/* Activity History Log */}
+            <div className={styles.section}>
+              <h4 className={styles.section_title}>
+                <FiActivity size={14} />
+                <span>Activity History</span>
+              </h4>
+              <div className={styles.activity_timeline}>
+                {activities.slice().reverse().map((act) => (
+                  <div key={act.id || act._id} className={styles.activity_item}>
+                    <div className={styles.activity_dot} />
+                    <div className={styles.activity_info_box}>
+                      <p className={styles.activity_desc}>{renderActivityMessage(act)}</p>
+                      <span className={styles.activity_time_stamp}>{formatCommentDate(act.createdAt)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Comments Feed */}
             <div className={styles.section}>
               <h4 className={styles.section_title}>
@@ -375,7 +434,8 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
                       dueDate: dueDate ? new Date(dueDate) : null,
                       tasks: subtasks,
                       comments,
-                      attachments
+                      attachments,
+                      activities
                     });
                   }}
                 >
@@ -405,7 +465,8 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
                       dueDate: e.target.value ? new Date(e.target.value) : null,
                       tasks: subtasks,
                       comments,
-                      attachments
+                      attachments,
+                      activities
                     });
                   }}
                 />
