@@ -1,102 +1,141 @@
 .navbar {
-   
-    width: 100%;
-    height: 80px;
-    background-color: rgb(216, 226, 220);
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    padding: 0 40px;
-    z-index: 1000;
-  }
-  
-  .container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  }
-  
-  .title {
-    font-size: 1.2rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    color: #333;
-  }
-  
-  .heart {
-    color: red;
-    font-size: 1.5rem;
-    margin-left: 5px;
-  }
-  
-  .menuIcon {
-    font-size: 1.8rem;
-    color: #333;
-    cursor: pointer;
-    display: none;
-  }
-  
-  .buttonContainer {
-    display: flex;
-    gap: 15px;
-  }
-  
-  .button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: 0.3s ease-in-out;
-    color: white;
-  }
+  height: 64px;
+  background: rgba(15, 23, 42, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  backdrop-filter: blur(20px);
+  width: 100%;
+}
 
-  .changebutton {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: 0.3s ease-in-out;
-    color: black;
-  }
-  
-  .button:hover {
-    transform: scale(1.05);
-  }
-  
-  .clearButton {
-    background-color: #e63946;
-    
-  }
-  
-  .logoutButton {
-    background-color: #333;
-  }
-  
-  @media (max-width: 768px) {
-    .menuIcon {
-      display: block;
-    }
-  
-    .buttonContainer {
-      position: absolute;
-      top: 80px;
-      left: 0;
-      width: 100%;
-      background: #ffffff;
-      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      padding: 15px 0;
-      display: none;
-    }
-  
-    .showMenu {
-      display: flex;
-    }
-  }
-  
+.left {
+  display: flex;
+  align-items: center;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
+.center {
+  flex-grow: 1;
+  max-width: 420px;
+  margin: 0 24px;
+}
+
+.search_bar {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  height: 38px;
+  transition: all 0.2s;
+}
+
+.search_bar:focus-within {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 1px var(--accent-blue);
+}
+
+.search_icon {
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+.search_input {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  width: 100%;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.search_input::placeholder {
+  color: var(--text-secondary);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.active_members {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 4px 10px;
+  height: 38px;
+}
+
+.users_icon {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.avatar_group {
+  display: flex;
+  align-items: center;
+}
+
+.member_avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  border: 2px solid var(--bg-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: -6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.member_avatar:first-child {
+  margin-left: 0;
+}
+
+.more_avatars {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-left: 6px;
+}
+
+.share_btn {
+  background: var(--accent-blue);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  height: 38px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.share_btn:hover {
+  opacity: 0.95;
+}

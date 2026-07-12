@@ -1,71 +1,40 @@
-.custom-scroll::-webkit-scrollbar {
-    width: 8px;
+.app_layout {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--bg-color);
+  overflow: hidden;
 }
 
-.custom-scroll::-webkit-scrollbar-thumb {
-    border-radius: 50px;
-    border: 1px solid #ccc;
-    background-color: #fff;
+.board_viewport {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
-.custom-scroll::-webkit-scrollbar-thumb:hover {
-    border: 1px solid gray;
+.empty_state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+  text-align: center;
+  padding: 40px;
+  gap: 12px;
+  color: var(--text-secondary);
 }
 
-.app {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
+.empty_state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-
-/* .app_nav {
-    padding: 30px;
-    box-shadow: 0 1px 20px rgba(56, 40, 40, 0.05);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    position: sticky;
-    top: 0;
-    background-color: #fff;
-} */
-
-.app_boards_container {
-    flex: 1;
-    width: 100vw;
-    height: 100%;
-    overflow-x: auto;
-    padding-top: 20px;
-    /* background-color: #ccc; */
-    background-size: cover;
-    background-repeat: no-repeat;
-    /* background-position: center; */
-}
-
-.app_boards {
-    height: 100%;
-    width: fit-content;
-    padding: 10px 30px;
-    display: flex;
-    gap: 30px;
-}
-
-.app_boards_last {
-    
-    flex-basis: 290px;
-    min-width: 290px;
-}
-
-.app_boards_add_board {
-    background-color: #fff;
-    color: #000;
-    border-radius: 10px;
-    box-shadow: 1px 1px 0 1px rgba(0, 0, 0, 0.12);
-    width: 100%;
-    text-align: center;
-}
-
-.app_boards_add_board_edit {
-    background-color: #fff;
-    border-radius: 10px;
-    padding: 10px;
+.empty_state p {
+  font-size: 14px;
+  max-width: 320px;
+  line-height: 1.5;
 }

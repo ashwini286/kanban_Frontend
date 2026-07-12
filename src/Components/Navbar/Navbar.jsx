@@ -1,45 +1,62 @@
-import React, { useState } from "react";
-import { AiOutlineClear, AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
-import { useNavigate } from "react-router-dom";
-import Cookies from "js-cookie";
+import React from "react";
+import { FiSearch, FiShare2, FiUsers } from "react-icons/fi";
 import styles from "./Navbar.module.css";
 
-const Navbar = ({ changeTheme, deleteAllCards }) => {
-  const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleLogout = () => {
-    Cookies.remove("authToken");
-    window.location.reload();
-    navigate("/");
-  };
-
+const Navbar = ({ boardTitle, searchQuery, setSearchQuery, activeUsers = [] }) => {
   return (
-    <nav className={styles.navbar}>
-      <div className={styles.container}>
-        <h4 className={styles.title}>
-          Made with <span className={styles.heart}>💕</span>
-        </h4>
+    <div className={styles.navbar}>
+      {/* Left: Board Title */}
+      <div className={styles.left}>
+        <h1 className={styles.title}>{boardTitle || "Select a Board"}</h1>
+      </div>
 
-        <div className={styles.menuIcon} onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <AiOutlineClose /> : <AiOutlineMenu />}
-        </div>
-
-        <div className={`${styles.buttonContainer} ${isOpen ? styles.showMenu : ""}`}>
-          <button onClick={changeTheme} className={`${styles.button } ${styles.changebutton}`}>
-            Change Theme
-          </button>
-
-          <button onClick={deleteAllCards} className={`${styles.button} ${styles.clearButton}`}>
-            <AiOutlineClear /> Clear Data
-          </button>
-
-          <button onClick={handleLogout} className={`${styles.button} ${styles.logoutButton}`}>
-            Logout
-          </button>
+      {/* Center: Search input */}
+      <div className={styles.center}>
+        <div className={styles.search_bar}>
+          <FiSearch className={styles.search_icon} />
+          <input
+            type="text"
+            className={styles.search_input}
+            placeholder="Search tasks..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
-    </nav>
+
+      {/* Right: Active members & share actions */}
+      <div className={styles.right}>
+        {/* Active Avatars */}
+        {activeUsers.length > 0 && (
+          <div className={styles.active_members} title={`${activeUsers.length} active users viewing this board`}>
+            <FiUsers className={styles.users_icon} />
+            <div className={styles.avatar_group}>
+              {activeUsers.slice(0, 3).map((user, idx) => (
+                <div 
+                  key={user.userId || idx} 
+                  className={styles.member_avatar} 
+                  style={{ zIndex: 3 - idx }}
+                  title={user.username || "Collaborator"}
+                >
+                  {user.username ? user.username[0].toUpperCase() : "C"}
+                </div>
+              ))}
+              {activeUsers.length > 3 && (
+                <div className={styles.more_avatars}>+{activeUsers.length - 3}</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <button 
+          className={styles.share_btn} 
+          onClick={() => alert("Share feature coming soon! You can invite members via emails.")}
+        >
+          <FiShare2 size={14} />
+          <span>Share</span>
+        </button>
+      </div>
+    </div>
   );
 };
 

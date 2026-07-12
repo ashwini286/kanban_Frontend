@@ -1,48 +1,39 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Cookies from "js-cookie";
 import io from "socket.io-client";
 
+import Sidebar from "../Sidebar/Sidebar";
 import Navbar from "../Navbar/Navbar";
-import Board from "../Board/Board";
-import styles from "./Home.module.css";
-import Editable from "../Editabled/Editable";
+import BoardArea from "../Board/BoardArea";
 import API from "./apiConfig";
-
-import a from "../images/a.jpg";
-import b from "../images/b.jpg";
-import c from "../images/c.jpg";
-import d from "../images/d.jpg";
-import e from "../images/e.jpg";
-import f from "../images/f.jpg";
-import g from "../images/g.jpg";
-import i from "../images/i.jpg";
-import j from "../images/j.jpg";
-import k from "../images/k.jpg";
-import l from "../images/l.jpg";
-import m from "../images/m.jpg";
-import n from "../images/n.jpg";
-import o from "../images/o.jpg";
-import p from "../images/p.jpg";
-import q from "../images/q.jpg";
+import styles from "./Home.module.css";
 
 const socket = io("http://localhost:8000", { autoConnect: false });
 
 export default function Home() {
   const navigate = useNavigate();
-  const [changebg, setChangebg] = useState(10);
   const [boards, setBoards] = useState([]);
-  const [targetCard, setTargetCard] = useState({ bid: "", cid: "" });
+  const [activeBoardId, setActiveBoardId] = useState("");
+  const [activeBoard, setActiveBoard] = useState(null);
+  
+  // Presence and Query States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeUsers] = useState([
+    { userId: "1", username: "Amit" },
+    { userId: "2", username: "Pooja" }
+  ]);
+  const [userEmail, setUserEmail] = useState("");
 
-  const backgroundImages = [a, b, c, d, e, f, g, i, j, k, l, m, n, o, p, q];
+  // Drag states
+  const [dragInfo, setDragInfo] = useState({ cardId: "", sourceColId: "" });
+  const [targetInfo, setTargetInfo] = useState({ colId: "", cardId: "" });
 
-  const changeTheme = () => {
-    if (backgroundImages.length - 1 > changebg) {
-      setChangebg(changebg + 1);
-    } else {
-      setChangebg(0);
-    }
+  const logout = () => {
+    Cookies.remove("authToken");
+    socket.disconnect();
+    navigate("/");
   };
 
   const fetchBoards = async () => {
@@ -53,24 +44,36 @@ export default function Home() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBoards(res.data);
-    } catch (err) {
-      console.error("Error fetching boards:", err);
-    }
-  };
-
-  const notifyBoardChanged = () => {
-    const token = Cookies.get("authToken");
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        const userId = payload.id;
-        socket.emit("board-changed", { boardId: userId });
-      } catch (e) {
-        console.error(e);
+      if (res.data.length > 0 && !activeBoardId) {
+        // default select first board
+        setActiveBoardId(res.data[0]._id || res.data[0].id);
       }
+    } catch (err) {
+      console.error("Error fetching boards list:", err);
     }
   };
 
+  const fetchActiveBoardDetails = useCallback(async (boardId) => {
+    if (!boardId) return;
+    const token = Cookies.get("authToken");
+    if (!token) return;
+    try {
+      const res = await axios.get(API.BOARDS + `/${boardId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setActiveBoard(res.data);
+    } catch (err) {
+      console.error("Error loading board details:", err);
+    }
+  }, []);
+
+  const notifyBoardChanged = useCallback(() => {
+    if (activeBoardId) {
+      socket.emit("board-changed", { boardId: activeBoardId });
+    }
+  }, [activeBoardId]);
+
+  // WebSocket Connection Lifecycles
   useEffect(() => {
     const token = Cookies.get("authToken");
     if (!token) {
@@ -80,16 +83,18 @@ export default function Home() {
 
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
-      const userId = payload.id;
+      setUserEmail(payload.email || "user@example.com");
 
       socket.connect();
-      socket.emit("join-board", userId);
 
+      // Listen for socket events
       socket.on("board-changed", () => {
-        fetchBoards();
+        if (activeBoardId) {
+          fetchActiveBoardDetails(activeBoardId);
+        }
       });
-    } catch (e) {
-      console.error("Error initializing socket connection:", e);
+    } catch (err) {
+      console.error("Socket startup failed:", err);
     }
 
     fetchBoards();
@@ -98,206 +103,334 @@ export default function Home() {
       socket.off("board-changed");
       socket.disconnect();
     };
-  }, [navigate]);
+  }, [navigate, activeBoardId, fetchActiveBoardDetails]);
 
-  const addboardHandler = async (name) => {
+  // Join a board room when selection changes
+  useEffect(() => {
+    if (activeBoardId) {
+      const token = Cookies.get("authToken");
+      let userId = "user";
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        userId = payload.id;
+      } catch(e){}
+
+      socket.emit("join-board", { boardId: activeBoardId, userId });
+      fetchActiveBoardDetails(activeBoardId);
+    }
+  }, [activeBoardId, fetchActiveBoardDetails]);
+
+  // Board CRUD
+  const handleCreateBoard = async (title) => {
     const token = Cookies.get("authToken");
     if (!token) return;
     try {
-      const res = await axios.post(API.CREATE_BOARD, { name }, {
+      const res = await axios.post(API.CREATE_BOARD, { title }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBoards(prev => [...prev, res.data]);
-      notifyBoardChanged();
+      setActiveBoardId(res.data._id || res.data.id);
     } catch (err) {
-      console.error("Error creating board column:", err);
+      console.error("Error creating board:", err);
     }
   };
 
-  const removeBoard = async (id) => {
+  // Column CRUD
+  const addColumn = async (title) => {
+    if (!activeBoardId) return;
     const token = Cookies.get("authToken");
     if (!token) return;
     try {
-      await axios.delete(API.DELETE_BOARD(id), {
+      const res = await axios.post("http://localhost:8000/api/column", {
+        boardId: activeBoardId,
+        title
+      }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setBoards(prev => prev.filter(b => b.id !== id));
+      
+      const newCol = { ...res.data, id: res.data._id, cards: [] };
+      setActiveBoard(prev => prev ? {
+        ...prev,
+        columns: [...prev.columns, newCol]
+      } : null);
+
       notifyBoardChanged();
     } catch (err) {
-      console.error("Error deleting board column:", err);
+      console.error("Error creating column:", err);
     }
   };
 
-  const addCardHandler = async (boardId, title) => {
+  const updateColumn = async (columnId, updateData) => {
     const token = Cookies.get("authToken");
     if (!token) return;
+    try {
+      const res = await axios.put(`http://localhost:8000/api/column/${columnId}`, updateData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setActiveBoard(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          columns: prev.columns.map(c => c.id === columnId ? { ...c, ...res.data } : c)
+        };
+      });
 
-    const col = boards.find(b => b.id === boardId);
-    const position = col ? col.cards.length : 0;
+      notifyBoardChanged();
+    } catch (err) {
+      console.error("Error updating column:", err);
+    }
+  };
 
+  const deleteColumn = async (columnId) => {
+    const token = Cookies.get("authToken");
+    if (!token) return;
+    try {
+      await axios.delete(`http://localhost:8000/api/column/${columnId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setActiveBoard(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          columns: prev.columns.filter(c => c.id !== columnId)
+        };
+      });
+
+      notifyBoardChanged();
+    } catch (err) {
+      console.error("Error deleting column:", err);
+    }
+  };
+
+  // Task Card CRUD
+  const addCard = async (columnId, title) => {
+    const token = Cookies.get("authToken");
+    if (!token) return;
     try {
       const res = await axios.post(API.ADD_CARD, {
-        name: title,
-        board: boardId,
-        position
+        title,
+        column: columnId,
+        board: activeBoardId
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       const newCard = { ...res.data, id: res.data._id };
 
-      setBoards(prev => prev.map(b => {
-        if (b.id === boardId) {
-          return { ...b, cards: [...b.cards, newCard] };
-        }
-        return b;
-      }));
+      setActiveBoard(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          columns: prev.columns.map(c => {
+            if (c.id === columnId) {
+              return { ...c, cards: [...c.cards, newCard] };
+            }
+            return c;
+          })
+        };
+      });
+
       notifyBoardChanged();
     } catch (err) {
-      console.error("Error adding task card:", err);
+      console.error("Error adding card:", err);
     }
   };
 
-  const removeCard = async (boardId, cardId) => {
+  const removeCard = async (columnId, cardId) => {
     const token = Cookies.get("authToken");
     if (!token) return;
     try {
       await axios.delete(API.DELETE_CARD(cardId), {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setBoards(prev => prev.map(b => {
-        if (b.id === boardId) {
-          return { ...b, cards: b.cards.filter(c => c.id !== cardId) };
-        }
-        return b;
-      }));
-      notifyBoardChanged();
-    } catch (err) {
-      console.error("Error deleting task card:", err);
-    }
-  };
 
-  const dragEnded = async (bid, cid) => {
-    let s_boardIndex = boards.findIndex((item) => item.id === bid);
-    if (s_boardIndex < 0) return;
-
-    let s_cardIndex = boards[s_boardIndex]?.cards?.findIndex(
-      (item) => item.id === cid
-    );
-    if (s_cardIndex < 0) return;
-
-    let t_boardIndex = boards.findIndex((item) => item.id === targetCard.bid);
-    if (t_boardIndex < 0) return;
-
-    let t_cardIndex = boards[t_boardIndex]?.cards?.findIndex(
-      (item) => item.id === targetCard.cid
-    );
-    if (t_cardIndex < 0) return;
-
-    const tempBoards = JSON.parse(JSON.stringify(boards));
-    const sourceCard = tempBoards[s_boardIndex].cards[s_cardIndex];
-
-    tempBoards[s_boardIndex].cards.splice(s_cardIndex, 1);
-    tempBoards[t_boardIndex].cards.splice(t_cardIndex, 0, sourceCard);
-
-    const updatedTasks = [];
-
-    tempBoards[s_boardIndex].cards = tempBoards[s_boardIndex].cards.map((c, index) => {
-      const updated = { ...c, position: index, board: tempBoards[s_boardIndex].id };
-      updatedTasks.push({ _id: c.id, position: index, board: tempBoards[s_boardIndex].id });
-      return updated;
-    });
-
-    tempBoards[t_boardIndex].cards = tempBoards[t_boardIndex].cards.map((c, index) => {
-      const updated = { ...c, position: index, board: tempBoards[t_boardIndex].id };
-      updatedTasks.push({ _id: c.id, position: index, board: tempBoards[t_boardIndex].id });
-      return updated;
-    });
-
-    setBoards(tempBoards);
-    setTargetCard({ bid: "", cid: "" });
-
-    const token = Cookies.get("authToken");
-    if (!token) return;
-    try {
-      await axios.put(API.REORDER_CARDS, { tasks: updatedTasks }, {
-        headers: { Authorization: `Bearer ${token}` }
+      setActiveBoard(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          columns: prev.columns.map(c => {
+            if (c.id === columnId) {
+              return { ...c, cards: c.cards.filter(card => card.id !== cardId) };
+            }
+            return c;
+          })
+        };
       });
+
       notifyBoardChanged();
     } catch (err) {
-      console.error("Error bulk reordering tasks:", err);
-      fetchBoards();
+      console.error("Error deleting card:", err);
     }
   };
 
-  const dragEntered = (bid, cid) => {
-    if (targetCard.cid === cid) return;
-    setTargetCard({ bid, cid });
-  };
-
-  const updateCard = async (boardId, cardId, updatedCardData) => {
+  const updateCard = async (columnId, cardId, updatedData) => {
     const token = Cookies.get("authToken");
     if (!token) return;
     try {
-      const res = await axios.put(API.UPDATE_CARD(cardId), {
-        name: updatedCardData.title,
-        description: updatedCardData.description,
-        date: updatedCardData.date
-      }, {
+      const res = await axios.put(API.UPDATE_CARD(cardId), updatedData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       const updatedCard = { ...res.data, id: res.data._id };
 
-      setBoards(prev => prev.map(b => {
-        if (b.id === boardId) {
-          return {
-            ...b,
-            cards: b.cards.map(c => c.id === cardId ? updatedCard : c)
-          };
-        }
-        return b;
-      }));
+      setActiveBoard(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          columns: prev.columns.map(c => {
+            if (c.id === columnId) {
+              return {
+                ...c,
+                cards: c.cards.map(card => card.id === cardId ? updatedCard : card)
+              };
+            }
+            return c;
+          })
+        };
+      });
+
       notifyBoardChanged();
     } catch (err) {
-      console.error("Error updating task card:", err);
+      console.error("Error updating card:", err);
     }
   };
 
-  const deleteAllCards = () => {
-    setBoards([]);
+  // Drag and Drop Logic
+  const dragStart = (columnId, cardId) => {
+    setDragInfo({ cardId, sourceColId: columnId });
   };
 
-  return (
-    <div className={styles.app}>
-      <Navbar deleteAllCards={deleteAllCards} changeTheme={changeTheme} />
-    
-      <div className={styles.app_boards_container} style={{ backgroundImage: `url(${backgroundImages[changebg]})` }}>
-        <div id="ol" className={styles.app_boards}>
-          {boards.map((board) => (
-            <Board
-              key={board.id} 
-              board={board}
-              addCard={addCardHandler}
-              removeBoard={() => removeBoard(board.id)}
-              removeCard={removeCard}
-              dragEnded={dragEnded}
-              dragEntered={dragEntered}
-              updateCard={updateCard}
-            />
-          ))}
+  const dragEnter = (columnId, cardId) => {
+    if (targetInfo.colId === columnId && targetInfo.cardId === cardId) return;
+    setTargetInfo({ colId: columnId, cardId });
+  };
 
-          <div className={styles.app_boards_last}>
-            <Editable
-              displayClass={styles.app_boards_add_board}
-              editClass={styles.app_boards_add_board_edit}
-              placeholder="Enter Board Name"
-              text="Add Board"
-              buttonText="Add Board"
-              onSubmit={addboardHandler}
-            />
+  const dragEnd = async () => {
+    const { cardId, sourceColId } = dragInfo;
+    const { colId: targetColId, cardId: targetCardId } = targetInfo;
+
+    if (!cardId || !targetColId) return;
+
+    const sourceColIndex = activeBoard.columns.findIndex(c => c.id === sourceColId);
+    const targetColIndex = activeBoard.columns.findIndex(c => c.id === targetColId);
+
+    if (sourceColIndex < 0 || targetColIndex < 0) return;
+
+    const sourceCardIndex = activeBoard.columns[sourceColIndex].cards.findIndex(c => c.id === cardId);
+    if (sourceCardIndex < 0) return;
+
+    const tempBoard = JSON.parse(JSON.stringify(activeBoard));
+    const cardToMove = tempBoard.columns[sourceColIndex].cards[sourceCardIndex];
+
+    // Remove from source list
+    tempBoard.columns[sourceColIndex].cards.splice(sourceCardIndex, 1);
+
+    // Find insertion index in target column
+    let insertIndex = tempBoard.columns[targetColIndex].cards.length;
+    if (targetCardId) {
+      const idx = tempBoard.columns[targetColIndex].cards.findIndex(c => c.id === targetCardId);
+      if (idx >= 0) insertIndex = idx;
+    }
+
+    // Insert into target list
+    tempBoard.columns[targetColIndex].cards.splice(insertIndex, 0, cardToMove);
+
+    const updatedTasksList = [];
+
+    // Recalculate source positions
+    tempBoard.columns[sourceColIndex].cards = tempBoard.columns[sourceColIndex].cards.map((c, index) => {
+      updatedTasksList.push({ _id: c.id, position: index, column: tempBoard.columns[sourceColIndex].id });
+      return { ...c, position: index, column: tempBoard.columns[sourceColIndex].id };
+    });
+
+    // Recalculate target positions
+    tempBoard.columns[targetColIndex].cards = tempBoard.columns[targetColIndex].cards.map((c, index) => {
+      updatedTasksList.push({ _id: c.id, position: index, column: tempBoard.columns[targetColIndex].id });
+      return { ...c, position: index, column: tempBoard.columns[targetColIndex].id };
+    });
+
+    // Apply local state optimistically
+    setActiveBoard(tempBoard);
+    setDragInfo({ cardId: "", sourceColId: "" });
+    setTargetInfo({ colId: "", cardId: "" });
+
+    // Put bulk update to API
+    const token = Cookies.get("authToken");
+    if (!token) return;
+    try {
+      await axios.put(API.REORDER_CARDS, { tasks: updatedTasksList }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      notifyBoardChanged();
+    } catch (err) {
+      console.error("Reorder failed, reverting:", err);
+      if (activeBoardId) {
+        fetchActiveBoardDetails(activeBoardId);
+      }
+    }
+  };
+
+  // Filter tasks based on global navbar search query
+  const getFilteredBoard = () => {
+    if (!activeBoard) return null;
+    if (!searchQuery.trim()) return activeBoard;
+
+    const query = searchQuery.toLowerCase().trim();
+    const filteredCols = activeBoard.columns.map(col => ({
+      ...col,
+      cards: col.cards.filter(c => 
+        c.title.toLowerCase().includes(query) || 
+        (c.description && c.description.toLowerCase().includes(query))
+      )
+    }));
+
+    return { ...activeBoard, columns: filteredCols };
+  };
+
+  const filteredBoard = getFilteredBoard();
+
+  return (
+    <div className={styles.app_layout}>
+      {/* Collapsible Workspace Sidebar */}
+      <Sidebar
+        boards={boards}
+        activeBoardId={activeBoardId}
+        setActiveBoardId={setActiveBoardId}
+        createBoard={handleCreateBoard}
+        logout={logout}
+        userEmail={userEmail}
+      />
+
+      {/* Main Board Viewport */}
+      <div className={styles.board_viewport}>
+        <Navbar
+          boardTitle={activeBoard ? activeBoard.title : "Select a Board"}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          activeUsers={activeUsers}
+        />
+
+        {activeBoard ? (
+          <BoardArea
+            board={filteredBoard}
+            addCard={addCard}
+            removeCard={removeCard}
+            updateCard={updateCard}
+            addColumn={addColumn}
+            deleteColumn={deleteColumn}
+            updateColumn={updateColumn}
+            dragStart={dragStart}
+            dragEnter={dragEnter}
+            dragEnd={dragEnd}
+          />
+        ) : (
+          <div className={styles.empty_state}>
+            <h3>No Board Selected</h3>
+            <p>Select a board from the sidebar, or create a new board to get started.</p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
