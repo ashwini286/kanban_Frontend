@@ -1,1 +1,1 @@
-export const API_BASE_URL = "http://localhost:8000";
+export const API_BASE_URL = "https://kanbanproject-backend-1.onrender.com";

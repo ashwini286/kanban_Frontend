@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FiX, FiCalendar, FiCheckSquare, FiTrash2, FiPlus, FiAlertCircle, FiMessageSquare, FiPaperclip, FiActivity } from "react-icons/fi";
 import Cookies from "js-cookie";
 import axios from "axios";
+import { API_BASE_URL } from "../../url.js";
 import styles from "./TaskModal.module.css";
 
 const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
@@ -119,7 +120,7 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
     formData.append("file", file);
 
     try {
-      const res = await axios.post(`http://localhost:8000/api/task/${card.id}/attachment`, formData, {
+      const res = await axios.post(`${API_BASE_URL}/api/task/${card.id}/attachment`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -150,7 +151,7 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
     if (!token) return;
 
     try {
-      const res = await axios.delete(`http://localhost:8000/api/task/${card.id}/attachment/${attachmentId}`, {
+      const res = await axios.delete(`${API_BASE_URL}/api/task/${card.id}/attachment/${attachmentId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAttachments(res.data.attachments || []);

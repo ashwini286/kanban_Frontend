@@ -9,8 +9,9 @@ import Navbar from "../Navbar/Navbar";
 import BoardArea from "../Board/BoardArea";
 import API from "./apiConfig";
 import styles from "./Home.module.css";
+import { API_BASE_URL } from "../../url.js";
 
-const socket = io("http://localhost:8000", { autoConnect: false });
+const socket = io(API_BASE_URL, { autoConnect: false });
 
 export default function Home() {
   const navigate = useNavigate();
@@ -151,7 +152,7 @@ export default function Home() {
     const token = Cookies.get("authToken");
     if (!token) return;
     try {
-      const res = await axios.post("http://localhost:8000/api/column", {
+      const res = await axios.post(`${API_BASE_URL}/api/column`, {
         boardId: activeBoardId,
         title
       }, {
@@ -174,7 +175,7 @@ export default function Home() {
     const token = Cookies.get("authToken");
     if (!token) return;
     try {
-      const res = await axios.put(`http://localhost:8000/api/column/${columnId}`, updateData, {
+      const res = await axios.put(`${API_BASE_URL}/api/column/${columnId}`, updateData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -196,7 +197,7 @@ export default function Home() {
     const token = Cookies.get("authToken");
     if (!token) return;
     try {
-      await axios.delete(`http://localhost:8000/api/column/${columnId}`, {
+      await axios.delete(`${API_BASE_URL}/api/column/${columnId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

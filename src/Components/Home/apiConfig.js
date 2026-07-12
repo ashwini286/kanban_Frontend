@@ -1,4 +1,5 @@
-const BASE_URL = "http://localhost:8000/api";
+import { API_BASE_URL } from "../../url.js";
+const BASE_URL = `${API_BASE_URL}/api`;
 
 const API = {
   LOGIN: `${BASE_URL}/auth/login`,
