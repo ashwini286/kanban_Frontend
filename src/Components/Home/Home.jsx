@@ -33,9 +33,9 @@ export default function Home() {
   const [targetInfo, setTargetInfo] = useState({ colId: "", cardId: "" });
 
   const logout = () => {
-    Cookies.remove("authToken");
+    Cookies.remove("authToken", { path: "/" });
     socket.disconnect();
-    navigate("/");
+    window.location.href = "/";
   };
 
   const fetchBoards = async () => {
