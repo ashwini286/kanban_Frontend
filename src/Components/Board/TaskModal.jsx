@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { FiX, FiCalendar, FiCheckSquare, FiTrash2, FiPlus, FiAlertCircle, FiMessageSquare } from "react-icons/fi";
+import { FiX, FiCalendar, FiCheckSquare, FiTrash2, FiPlus, FiAlertCircle, FiMessageSquare, FiPaperclip } from "react-icons/fi";
 import Cookies from "js-cookie";
+import axios from "axios";
 import styles from "./TaskModal.module.css";
 
 const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
@@ -12,6 +13,10 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
   const [newSubtask, setNewSubtask] = useState("");
   const [comments, setComments] = useState(card.comments || []);
   const [newComment, setNewComment] = useState("");
+  
+  // Attachments States
+  const [attachments, setAttachments] = useState(card.attachments || []);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   useEffect(() => {
     setTitle(card.title || "");
@@ -20,6 +25,7 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
     setDueDate(card.dueDate ? new Date(card.dueDate).toISOString().substr(0, 10) : "");
     setSubtasks(card.tasks || []);
     setComments(card.comments || []);
+    setAttachments(card.attachments || []);
   }, [card]);
 
   const handleSave = (updatedFields) => {
@@ -30,6 +36,7 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
       dueDate: dueDate ? new Date(dueDate) : null,
       tasks: subtasks,
       comments,
+      attachments,
       ...updatedFields
     });
   };
@@ -77,7 +84,6 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       userId = payload.id;
-      // If backend token contains email, decode it, otherwise fallback
       userEmail = payload.email || "User";
     } catch (err) {
       console.error(err);
@@ -99,6 +105,61 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
   const formatCommentDate = (dateVal) => {
     const d = new Date(dateVal);
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
+
+  // Upload Logic
+  const uploadFile = async (file) => {
+    const token = Cookies.get("authToken");
+    if (!token) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await axios.post(`http://localhost:8000/api/task/${card.id}/attachment`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        }
+      });
+      setAttachments(res.data.attachments || []);
+      updateCard(columnId, card.id, { attachments: res.data.attachments || [] });
+    } catch (err) {
+      console.error("Error uploading file attachment:", err);
+      alert("Upload failed. Make sure the file is less than 10MB.");
+    }
+  };
+
+  const handleFileDrop = (e) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    if (e.dataTransfer.files.length > 0) {
+      uploadFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId) => {
+    const token = Cookies.get("authToken");
+    if (!token) return;
+
+    try {
+      const res = await axios.delete(`http://localhost:8000/api/task/${card.id}/attachment/${attachmentId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAttachments(res.data.attachments || []);
+      updateCard(columnId, card.id, { attachments: res.data.attachments || [] });
+    } catch (err) {
+      console.error("Error deleting file attachment:", err);
+    }
+  };
+
+  const formatBytes = (bytes, decimals = 2) => {
+    if (!bytes) return "0 Bytes";
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
   };
 
   return (
@@ -181,6 +242,84 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
               </form>
             </div>
 
+            {/* File Attachments Section */}
+            <div className={styles.section}>
+              <h4 className={styles.section_title}>
+                <FiPaperclip size={14} />
+                <span>Attachments</span>
+              </h4>
+              
+              {/* Dropzone */}
+              <div 
+                className={`${styles.dropzone} ${isDraggingFile ? styles.dropzone_active : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDraggingFile(true);
+                }}
+                onDragLeave={() => setIsDraggingFile(false)}
+                onDrop={handleFileDrop}
+              >
+                <span>Drag & drop files here, or </span>
+                <input
+                  type="file"
+                  className={styles.file_input_hidden}
+                  onChange={(e) => {
+                    if (e.target.files.length > 0) {
+                      uploadFile(e.target.files[0]);
+                    }
+                  }}
+                  id="task-file-input"
+                />
+                <label htmlFor="task-file-input" className={styles.dropzone_label_btn}>
+                  browse file
+                </label>
+              </div>
+
+              {/* Attachments List */}
+              <div className={styles.attachments_list}>
+                {attachments.map((att) => {
+                  const isImg = att.fileType && att.fileType.startsWith("image/");
+                  return (
+                    <div key={att.id} className={styles.attachment_card}>
+                      {isImg ? (
+                        <div className={styles.attachment_thumb_wrapper}>
+                          <img src={att.url} alt={att.name} className={styles.attachment_thumb} />
+                        </div>
+                      ) : (
+                        <div className={styles.attachment_file_icon}>📄</div>
+                      )}
+                      
+                      <div className={styles.attachment_info}>
+                        <span className={styles.attachment_name}>{att.name}</span>
+                        <span className={styles.attachment_meta}>
+                          {formatBytes(att.size)} • {new Date(att.uploadedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      
+                      <div className={styles.attachment_actions}>
+                        <a 
+                          href={att.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className={styles.download_btn}
+                          download
+                        >
+                          Download
+                        </a>
+                        <button 
+                          className={styles.delete_attachment_btn}
+                          onClick={() => handleDeleteAttachment(att.id)}
+                          title="Delete attachment"
+                        >
+                          <FiTrash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Comments Feed */}
             <div className={styles.section}>
               <h4 className={styles.section_title}>
@@ -235,7 +374,8 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
                       priority: e.target.value,
                       dueDate: dueDate ? new Date(dueDate) : null,
                       tasks: subtasks,
-                      comments
+                      comments,
+                      attachments
                     });
                   }}
                 >
@@ -264,7 +404,8 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
                       priority,
                       dueDate: e.target.value ? new Date(e.target.value) : null,
                       tasks: subtasks,
-                      comments
+                      comments,
+                      attachments
                     });
                   }}
                 />

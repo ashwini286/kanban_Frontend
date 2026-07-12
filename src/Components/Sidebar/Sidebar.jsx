@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { FiGrid, FiPlus, FiLogOut, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import styles from "./Sidebar.module.css";
 
-const Sidebar = ({ boards, activeBoardId, setActiveBoardId, createBoard, logout, userEmail }) => {
-  const [collapsed, setCollapsed] = useState(false);
+const Sidebar = ({ boards, activeBoardId, setActiveBoardId, createBoard, logout, userEmail, collapsed, setCollapsed }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [boardTitle, setBoardTitle] = useState("");
 

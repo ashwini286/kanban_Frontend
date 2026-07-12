@@ -25,6 +25,7 @@ export default function Home() {
     { userId: "2", username: "Pooja" }
   ]);
   const [userEmail, setUserEmail] = useState("");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 768);
 
   // Drag states
   const [dragInfo, setDragInfo] = useState({ cardId: "", sourceColId: "" });
@@ -104,6 +105,15 @@ export default function Home() {
       socket.disconnect();
     };
   }, [navigate, activeBoardId, fetchActiveBoardDetails]);
+
+  // Handle window resizing to collapse sidebar on smaller screens
+  useEffect(() => {
+    const handleResize = () => {
+      setSidebarCollapsed(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Join a board room when selection changes
   useEffect(() => {
@@ -401,7 +411,17 @@ export default function Home() {
         createBoard={handleCreateBoard}
         logout={logout}
         userEmail={userEmail}
+        collapsed={sidebarCollapsed}
+        setCollapsed={setSidebarCollapsed}
       />
+
+      {/* Backdrop overlay to close sidebar on mobile */}
+      {!sidebarCollapsed && window.innerWidth < 768 && (
+        <div 
+          className={styles.sidebar_overlay} 
+          onClick={() => setSidebarCollapsed(true)} 
+        />
+      )}
 
       {/* Main Board Viewport */}
       <div className={styles.board_viewport}>
@@ -410,6 +430,8 @@ export default function Home() {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           activeUsers={activeUsers}
+          sidebarCollapsed={sidebarCollapsed}
+          setSidebarCollapsed={setSidebarCollapsed}
         />
 
         {activeBoard ? (

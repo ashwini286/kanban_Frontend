@@ -139,3 +139,40 @@
 .share_btn:hover {
   opacity: 0.95;
 }
+
+.menu_toggle_btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  transition: all 0.2s;
+}
+
+.menu_toggle_btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 12px;
+  }
+  .center {
+    display: none;
+  }
+  .title {
+    font-size: 15px;
+  }
+  .share_btn span {
+    display: none;
+  }
+  .share_btn {
+    padding: 0 12px;
+  }
+}

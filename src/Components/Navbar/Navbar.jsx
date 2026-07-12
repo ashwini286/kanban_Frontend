@@ -1,12 +1,21 @@
 import React from "react";
-import { FiSearch, FiShare2, FiUsers } from "react-icons/fi";
+import { FiSearch, FiShare2, FiUsers, FiMenu } from "react-icons/fi";
 import styles from "./Navbar.module.css";
 
-const Navbar = ({ boardTitle, searchQuery, setSearchQuery, activeUsers = [] }) => {
+const Navbar = ({ boardTitle, searchQuery, setSearchQuery, activeUsers = [], sidebarCollapsed, setSidebarCollapsed }) => {
   return (
     <div className={styles.navbar}>
       {/* Left: Board Title */}
       <div className={styles.left}>
+        {sidebarCollapsed && (
+          <button 
+            className={styles.menu_toggle_btn}
+            onClick={() => setSidebarCollapsed(false)}
+            title="Open Sidebar"
+          >
+            <FiMenu size={18} />
+          </button>
+        )}
         <h1 className={styles.title}>{boardTitle || "Select a Board"}</h1>
       </div>
 
