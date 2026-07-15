@@ -21,10 +21,6 @@ export default function Home() {
   
   // Presence and Query States
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeUsers] = useState([
-    { userId: "1", username: "Amit" },
-    { userId: "2", username: "Pooja" }
-  ]);
   const [userEmail, setUserEmail] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 768);
 
@@ -430,7 +426,6 @@ export default function Home() {
           boardTitle={activeBoard ? activeBoard.title : "Select a Board"}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          activeUsers={activeUsers}
           sidebarCollapsed={sidebarCollapsed}
           setSidebarCollapsed={setSidebarCollapsed}
         />
