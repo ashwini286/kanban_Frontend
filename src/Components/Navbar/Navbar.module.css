@@ -169,10 +169,45 @@
   .title {
     font-size: 15px;
   }
-  .share_btn span {
-    display: none;
+  .right {
+    gap: 8px;
   }
-  .share_btn {
-    padding: 0 12px;
+  .filter_select {
+    padding: 4px 8px;
+    font-size: 11px;
   }
+}
+
+.filter_group {
+  display: flex;
+  align-items: center;
+}
+
+.filter_select {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter_select:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.filter_select:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 1px var(--accent-blue);
+}
+
+.filter_select option {
+  background: rgb(15, 23, 42);
+  color: var(--text-primary);
 }

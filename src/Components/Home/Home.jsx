@@ -23,6 +23,8 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 768);
+  const [priorityFilter, setPriorityFilter] = useState("ALL");
+  const [dueDateFilter, setDueDateFilter] = useState("ALL");
 
   // Drag states
   const [dragInfo, setDragInfo] = useState({ cardId: "", sourceColId: "" });
@@ -379,19 +381,58 @@ export default function Home() {
     }
   };
 
-  // Filter tasks based on global navbar search query
+  // Filter tasks based on global navbar search query & advanced filters
   const getFilteredBoard = () => {
     if (!activeBoard) return null;
-    if (!searchQuery.trim()) return activeBoard;
 
     const query = searchQuery.toLowerCase().trim();
-    const filteredCols = activeBoard.columns.map(col => ({
-      ...col,
-      cards: col.cards.filter(c => 
-        c.title.toLowerCase().includes(query) || 
-        (c.description && c.description.toLowerCase().includes(query))
-      )
-    }));
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const weekEnd = new Date(todayStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const filteredCols = activeBoard.columns.map(col => {
+      const filteredCards = col.cards.filter(c => {
+        // 1. Text Query Filter
+        if (query) {
+          const matchTitle = c.title?.toLowerCase().includes(query);
+          const matchDesc = c.description?.toLowerCase().includes(query);
+          if (!matchTitle && !matchDesc) return false;
+        }
+
+        // 2. Priority Filter
+        if (priorityFilter !== "ALL" && c.priority !== priorityFilter) {
+          return false;
+        }
+
+        // 3. Due Date Filter
+        if (dueDateFilter !== "ALL") {
+          if (!c.dueDate) {
+            return dueDateFilter === "NONE";
+          }
+          const due = new Date(c.dueDate);
+          if (dueDateFilter === "OVERDUE") {
+            return due < todayStart;
+          }
+          if (dueDateFilter === "TODAY") {
+            return due >= todayStart && due <= todayEnd;
+          }
+          if (dueDateFilter === "WEEK") {
+            return due >= todayStart && due <= weekEnd;
+          }
+          if (dueDateFilter === "NONE") {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      return {
+        ...col,
+        cards: filteredCards
+      };
+    });
 
     return { ...activeBoard, columns: filteredCols };
   };
@@ -428,6 +469,10 @@ export default function Home() {
           setSearchQuery={setSearchQuery}
           sidebarCollapsed={sidebarCollapsed}
           setSidebarCollapsed={setSidebarCollapsed}
+          priorityFilter={priorityFilter}
+          setPriorityFilter={setPriorityFilter}
+          dueDateFilter={dueDateFilter}
+          setDueDateFilter={setDueDateFilter}
         />
 
         {activeBoard ? (
