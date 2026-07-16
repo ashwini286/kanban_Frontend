@@ -25,6 +25,14 @@ const Signup = () => {
     setError("");
     setLoading(true);
 
+    const password = formData.password;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setError("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await axios.post(`${API_BASE_URL}/api/auth/signup`, formData);
       alert("Signup Successful! Please log in.");

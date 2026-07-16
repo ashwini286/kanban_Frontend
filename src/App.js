@@ -4,25 +4,57 @@ import Login from "./Components/auth/Login.jsx";
 import Signup from "./Components/auth/SingUp";
 import Home from "./Components/Home/Home";
 import Cookies from "js-cookie";
+import axios from "axios";
+import { API_BASE_URL } from "./url";
 
-const App = () =>{
-  
-  const [token, setToken] = useState(Cookies.get("authToken"));
+const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      setIsAuthenticated(true);
-      setLoading(false);
-    } else {
-      setIsAuthenticated(false);
-      setLoading(false);
-    }
-  }, [token]);
+    const verifyToken = async () => {
+      const currentToken = Cookies.get("authToken");
+      if (!currentToken) {
+        setIsAuthenticated(false);
+        setLoading(false);
+        return;
+      }
 
-  if(loading){
-    return <h1>Loading...</h1>
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, {
+          headers: { Authorization: `Bearer ${currentToken}` }
+        });
+        if (response.data.valid) {
+          setIsAuthenticated(true);
+        } else {
+          Cookies.remove("authToken", { path: "/" });
+          setIsAuthenticated(false);
+        }
+      } catch (err) {
+        console.error("Token verification failed:", err);
+        Cookies.remove("authToken", { path: "/" });
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    verifyToken();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center", 
+        height: "100vh", 
+        background: "#0f172a", 
+        color: "#f8fafc"
+      }}>
+        <h2>Loading...</h2>
+      </div>
+    );
   }
 
   return (
@@ -37,5 +69,3 @@ const App = () =>{
 }
 
 export default App;
-
-
