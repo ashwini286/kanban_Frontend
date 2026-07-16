@@ -18,7 +18,12 @@ const Sidebar = ({ boards, activeBoardId, setActiveBoardId, createBoard, logout,
     <div className={`${styles.sidebar} ${collapsed ? styles.collapsed : ""}`}>
       {/* Sidebar Header */}
       <div className={styles.header}>
-        {!collapsed && <h2 className={styles.brand}>Cibanna</h2>}
+        {!collapsed && (
+          <div className={styles.brand_wrapper}>
+            <h2 className={styles.brand}>Cibanna</h2>
+            <span className={styles.brand_subtitle}>by Ashwini</span>
+          </div>
+        )}
         <button 
           className={styles.toggle_btn}
           onClick={() => setCollapsed(!collapsed)}
@@ -36,7 +41,7 @@ const Sidebar = ({ boards, activeBoardId, setActiveBoardId, createBoard, logout,
           </div>
           <div className={styles.user_info}>
             <span className={styles.user_email}>{userEmail || "user@example.com"}</span>
-            <span className={styles.user_role}>Workspace Owner</span>
+            <span className={styles.user_role}>Workspace Owner: Ashwini</span>
           </div>
         </div>
       )}

@@ -1,20 +1,16 @@
 import React, { useState } from "react";
-import axios from "axios"; // Import Axios for API requests
+import axios from "axios";
 import styles from "./Signup.module.css";
 import { AiFillEye, AiFillEyeInvisible, AiOutlineMail, AiOutlineLock } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../url.js";
-/*************  ✨ Codeium Command ⭐  *************/
-/******  9b1d0fb1-5f71-4669-9ca9-0f136c44f910  *******/
+
 const Signup = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-
-  // const API_BASE_URL = "https://kanbanproject-backend.onrender.com";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -34,7 +30,7 @@ const Signup = () => {
     }
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/auth/signup`, formData);
+      await axios.post(`${API_BASE_URL}/api/auth/signup`, formData);
       alert("Signup Successful! Please log in.");
       navigate("/");
     } catch (err) {
@@ -46,14 +42,20 @@ const Signup = () => {
 
   return (
     <div className={styles.app}>
+      {/* Decorative Floating Blobs */}
+      <div className={`${styles.blob} ${styles.blob1}`} />
+      <div className={`${styles.blob} ${styles.blob2}`} />
+      <div className={`${styles.blob} ${styles.blob3}`} />
+
       <div className={styles.glassContainer}>
-        <img 
-          className={styles.avatar} 
-          src="https://thumbs.dreamstime.com/b/man-profile-cartoon-smiling-vector-illustration-graphic-design-135443492.jpg" 
-          alt="User Avatar"
-        />
-        <h2 className={styles.heading}>Sign Up</h2>
+        <div className={styles.logo_wrapper}>
+          <div className={styles.logo_icon}>C</div>
+          <h2 className={styles.heading}>Create Account</h2>
+          <p className={styles.subheading}>Sign up to start organizing project cards.</p>
+        </div>
+
         {error && <p className={styles.error}>{error}</p>}
+
         <form onSubmit={handleSubmit}>
           <div className={styles.inputContainer}>
             <AiOutlineMail className={styles.icon} />
@@ -66,6 +68,7 @@ const Signup = () => {
               required
             />
           </div>
+
           <div className={styles.inputContainer}>
             <AiOutlineLock className={styles.icon} />
             <input
@@ -80,12 +83,23 @@ const Signup = () => {
               {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
             </span>
           </div>
+
+          {/* Password complexity tip */}
+          <div className={styles.pwd_requirements}>
+            💡 Must be 8+ chars, have 1 uppercase, 1 lowercase, 1 digit, and 1 symbol.
+          </div>
+
           <button type="submit" className={styles.button} disabled={loading}>
             {loading ? "Signing Up..." : "SIGN UP"}
           </button>
         </form>
+
         <div className={styles.loginLink}>
           <p>Already have an account? <a href="/">Login</a></p>
+        </div>
+
+        <div className={styles.footer_author}>
+          Designed & Developed by <span>Ashwini</span>
         </div>
       </div>
     </div>

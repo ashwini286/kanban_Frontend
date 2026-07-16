@@ -35,6 +35,20 @@
   -webkit-text-fill-color: transparent;
 }
 
+.brand_wrapper {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.brand_subtitle {
+  font-size: 9px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: -2px;
+}
+
 .toggle_btn {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);

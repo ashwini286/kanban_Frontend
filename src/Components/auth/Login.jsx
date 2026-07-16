@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios"; // Import Axios for API requests
+import axios from "axios";
 import styles from "./Login.module.css";
 import { AiFillEye, AiFillEyeInvisible, AiOutlineMail, AiOutlineLock } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
@@ -14,8 +14,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-
-  
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -39,14 +37,20 @@ const Login = () => {
 
   return (
     <div className={styles.app}>
+      {/* Decorative Floating Blobs */}
+      <div className={`${styles.blob} ${styles.blob1}`} />
+      <div className={`${styles.blob} ${styles.blob2}`} />
+      <div className={`${styles.blob} ${styles.blob3}`} />
+
       <div className={styles.glassContainer}>
-        <img 
-          className={styles.avatar} 
-          src="https://thumbs.dreamstime.com/b/man-profile-cartoon-smiling-vector-illustration-graphic-design-135443492.jpg" 
-          alt="User Avatar"
-        />
-        <h2 className={styles.heading}>Login</h2>
+        <div className={styles.logo_wrapper}>
+          <div className={styles.logo_icon}>C</div>
+          <h2 className={styles.heading}>Welcome Back</h2>
+          <p className={styles.subheading}>Login to continue managing your workspaces.</p>
+        </div>
+
         {error && <p className={styles.error}>{error}</p>}
+
         <form onSubmit={handleLogin}>
           <div className={styles.inputContainer}>
             <AiOutlineMail className={styles.icon} />
@@ -58,6 +62,7 @@ const Login = () => {
               required
             />
           </div>
+
           <div className={styles.inputContainer}>
             <AiOutlineLock className={styles.icon} />
             <input
@@ -71,12 +76,18 @@ const Login = () => {
               {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
             </span>
           </div>
+
           <button type="submit" className={styles.button} disabled={loading}>
             {loading ? "Logging in..." : "LOGIN"}
           </button>
         </form>
+
         <div className={styles.signupLink}>
           <p>Don't have an account? <a href="/signup">Sign Up</a></p>
+        </div>
+
+        <div className={styles.footer_author}>
+          Designed & Developed by <span>Ashwini</span>
         </div>
       </div>
     </div>
