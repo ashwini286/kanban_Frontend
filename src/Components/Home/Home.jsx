@@ -25,6 +25,7 @@ export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 768);
   const [priorityFilter, setPriorityFilter] = useState("ALL");
   const [dueDateFilter, setDueDateFilter] = useState("ALL");
+  const [userId, setUserId] = useState("");
 
   // Drag states
   const [dragInfo, setDragInfo] = useState({ cardId: "", sourceColId: "" });
@@ -84,14 +85,20 @@ export default function Home() {
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       setUserEmail(payload.email || "user@example.com");
+      setUserId(payload.id || "");
 
       socket.connect();
+      socket.emit("join-workspace", { userId: payload.id });
 
       // Listen for socket events
       socket.on("board-changed", () => {
         if (activeBoardId) {
           fetchActiveBoardDetails(activeBoardId);
         }
+      });
+
+      socket.on("workspace-changed", () => {
+        fetchBoards();
       });
     } catch (err) {
       console.error("Socket startup failed:", err);
@@ -101,6 +108,7 @@ export default function Home() {
 
     return () => {
       socket.off("board-changed");
+      socket.off("workspace-changed");
       socket.disconnect();
     };
   }, [navigate, activeBoardId, fetchActiveBoardDetails]);
@@ -441,14 +449,17 @@ export default function Home() {
 
   return (
     <div className={styles.app_layout}>
-      {/* Collapsible Workspace Sidebar */}
       <Sidebar
         boards={boards}
+        setBoards={setBoards}
+        fetchBoards={fetchBoards}
         activeBoardId={activeBoardId}
         setActiveBoardId={setActiveBoardId}
         createBoard={handleCreateBoard}
         logout={logout}
         userEmail={userEmail}
+        userId={userId}
+        socket={socket}
         collapsed={sidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
       />

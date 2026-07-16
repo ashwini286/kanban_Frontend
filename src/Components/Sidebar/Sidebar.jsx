@@ -1,10 +1,28 @@
 import React, { useState } from "react";
-import { FiGrid, FiPlus, FiLogOut, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiGrid, FiPlus, FiLogOut, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2 } from "react-icons/fi";
 import styles from "./Sidebar.module.css";
+import Cookies from "js-cookie";
+import axios from "axios";
+import { API_BASE_URL } from "../../url.js";
 
-const Sidebar = ({ boards, activeBoardId, setActiveBoardId, createBoard, logout, userEmail, collapsed, setCollapsed }) => {
+const Sidebar = ({ 
+  boards, 
+  setBoards, 
+  fetchBoards, 
+  activeBoardId, 
+  setActiveBoardId, 
+  createBoard, 
+  logout, 
+  userEmail, 
+  userId, 
+  socket, 
+  collapsed, 
+  setCollapsed 
+}) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [boardTitle, setBoardTitle] = useState("");
+  const [editingBoardId, setEditingBoardId] = useState("");
+  const [editingTitle, setEditingTitle] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -12,6 +30,57 @@ const Sidebar = ({ boards, activeBoardId, setActiveBoardId, createBoard, logout,
     createBoard(boardTitle.trim());
     setBoardTitle("");
     setShowAddForm(false);
+  };
+
+  const saveBoardTitle = async (boardId) => {
+    if (!editingTitle.trim()) {
+      setEditingBoardId("");
+      return;
+    }
+
+    try {
+      const token = Cookies.get("authToken");
+      await axios.put(`${API_BASE_URL}/api/board/${boardId}`, { title: editingTitle }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setEditingBoardId("");
+      
+      if (socket) {
+        socket.emit("workspace-changed", { userId });
+        socket.emit("board-changed", { boardId });
+      }
+
+      fetchBoards();
+    } catch (err) {
+      console.error("Failed to rename board:", err);
+      setEditingBoardId("");
+    }
+  };
+
+  const handleDeleteBoard = async (boardId) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this board? This action will permanently remove all columns and tasks!");
+    if (!confirmDelete) return;
+
+    try {
+      const token = Cookies.get("authToken");
+      await axios.delete(`${API_BASE_URL}/api/board/${boardId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (activeBoardId === boardId) {
+        setActiveBoardId("");
+        localStorage.removeItem("activeBoardId");
+      }
+
+      if (socket) {
+        socket.emit("workspace-changed", { userId });
+      }
+      
+      fetchBoards();
+    } catch (err) {
+      console.error("Failed to delete board:", err);
+    }
   };
 
   return (
@@ -86,17 +155,61 @@ const Sidebar = ({ boards, activeBoardId, setActiveBoardId, createBoard, logout,
         )}
 
         <div className={styles.boards_list}>
-          {boards.map((b) => (
-            <div
-              key={b._id || b.id}
-              className={`${styles.board_item} ${activeBoardId === (b._id || b.id) ? styles.active : ""}`}
-              onClick={() => setActiveBoardId(b._id || b.id)}
-              title={b.title}
-            >
-              <FiGrid size={16} />
-              {!collapsed && <span className={styles.board_name}>{b.title}</span>}
-            </div>
-          ))}
+          {boards.map((b, index) => {
+            const boardId = b._id || b.id;
+            const isEditing = editingBoardId === boardId;
+            return (
+              <div
+                key={boardId}
+                className={`${styles.board_item} ${activeBoardId === boardId ? styles.active : ""} ${isEditing ? styles.is_editing : ""}`}
+                onClick={() => !isEditing && setActiveBoardId(boardId)}
+                title={b.title}
+              >
+                {isEditing ? (
+                  <form 
+                    onSubmit={(e) => { e.preventDefault(); saveBoardTitle(boardId); }} 
+                    className={styles.edit_form} 
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <input
+                      type="text"
+                      className={styles.edit_input}
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onBlur={() => saveBoardTitle(boardId)}
+                      autoFocus
+                    />
+                  </form>
+                ) : (
+                  <>
+                    <div className={styles.board_item_left}>
+                      <FiGrid size={16} className={styles.grid_icon} />
+                      {!collapsed && <span className={styles.board_name}>{b.title}</span>}
+                    </div>
+                    
+                    {!collapsed && (
+                      <div className={styles.board_actions} onClick={(e) => e.stopPropagation()}>
+                        <button 
+                          onClick={() => { setEditingBoardId(boardId); setEditingTitle(b.title); }}
+                          className={styles.action_btn}
+                          title="Rename Board"
+                        >
+                          <FiEdit2 size={12} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteBoard(boardId)}
+                          className={styles.action_btn}
+                          title="Delete Board"
+                        >
+                          <FiTrash2 size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
