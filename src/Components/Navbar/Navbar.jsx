@@ -1,18 +1,48 @@
-import React from "react";
-import { FiSearch, FiMenu } from "react-icons/fi";
+import React, { useState } from "react";
+import { FiSearch, FiMenu, FiGrid, FiLogOut } from "react-icons/fi";
 import styles from "./Navbar.module.css";
 
 const Navbar = ({ 
   boardTitle, 
-  searchQuery, 
-  setSearchQuery, 
+  boards = [], 
+  setActiveBoardId, 
   sidebarCollapsed, 
   setSidebarCollapsed,
   priorityFilter,
   setPriorityFilter,
   dueDateFilter,
-  setDueDateFilter
+  setDueDateFilter,
+  onLogout
 }) => {
+  const [query, setQuery] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const handleInputChange = (val) => {
+    setQuery(val);
+    const trimmed = val.trim();
+    if (trimmed.length === 0) {
+      setErrorMsg("");
+      setShowDropdown(false);
+    } else if (trimmed.length < 3) {
+      setErrorMsg("You must type at least 3 characters to search");
+      setShowDropdown(false);
+    } else {
+      setErrorMsg("");
+      setShowDropdown(true);
+    }
+  };
+
+  const matches = boards.filter(b => 
+    b.title.toLowerCase().includes(query.toLowerCase().trim())
+  );
+
+  const handleSelectBoard = (boardId) => {
+    setActiveBoardId(boardId);
+    setQuery("");
+    setShowDropdown(false);
+  };
+
   return (
     <div className={styles.navbar}>
       {/* Left: Board Title */}
@@ -29,17 +59,52 @@ const Navbar = ({
         <h1 className={styles.title}>{boardTitle || "Select a Board"}</h1>
       </div>
 
-      {/* Center: Search input */}
+      {/* Center: Search input with dynamic board dropdown */}
       <div className={styles.center}>
         <div className={styles.search_bar}>
           <FiSearch className={styles.search_icon} />
           <input
             type="text"
             className={styles.search_input}
-            placeholder="Search tasks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by Board Name Only..."
+            value={query}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onFocus={() => {
+              if (query.trim().length >= 3) {
+                setShowDropdown(true);
+              } else if (query.trim().length > 0) {
+                setErrorMsg("You must type at least 3 characters to search");
+              }
+            }}
           />
+
+          {errorMsg && (
+            <div className={styles.search_error}>
+              {errorMsg}
+            </div>
+          )}
+
+          {showDropdown && (
+            <div 
+              className={styles.search_dropdown}
+              onMouseLeave={() => setShowDropdown(false)}
+            >
+              {matches.length > 0 ? (
+                matches.map((b) => (
+                  <button
+                    key={b._id || b.id}
+                    className={styles.dropdown_item}
+                    onClick={() => handleSelectBoard(b._id || b.id)}
+                  >
+                    <FiGrid size={14} style={{ color: "var(--accent-blue)" }} />
+                    <span>{b.title}</span>
+                  </button>
+                ))
+              ) : (
+                <div className={styles.dropdown_empty}>No matching boards found</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -76,6 +141,17 @@ const Navbar = ({
             <option value="NONE">No Due Date</option>
           </select>
         </div>
+
+        {/* Logout Button */}
+        <button
+          id="logout-btn"
+          className={styles.logout_btn}
+          onClick={onLogout}
+          title="Logout"
+        >
+          <FiLogOut size={15} />
+          <span>Logout</span>
+        </button>
       </div>
     </div>
   );

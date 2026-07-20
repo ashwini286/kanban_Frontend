@@ -20,7 +20,6 @@ export default function Home() {
   const [activeBoard, setActiveBoard] = useState(null);
   
   // Presence and Query States
-  const [searchQuery, setSearchQuery] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 768);
   const [priorityFilter, setPriorityFilter] = useState("ALL");
@@ -389,11 +388,10 @@ export default function Home() {
     }
   };
 
-  // Filter tasks based on global navbar search query & advanced filters
+  // Filter tasks based on advanced filters
   const getFilteredBoard = () => {
     if (!activeBoard) return null;
 
-    const query = searchQuery.toLowerCase().trim();
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
@@ -401,12 +399,6 @@ export default function Home() {
 
     const filteredCols = activeBoard.columns.map(col => {
       const filteredCards = col.cards.filter(c => {
-        // 1. Text Query Filter
-        if (query) {
-          const matchTitle = c.title?.toLowerCase().includes(query);
-          const matchDesc = c.description?.toLowerCase().includes(query);
-          if (!matchTitle && !matchDesc) return false;
-        }
 
         // 2. Priority Filter
         if (priorityFilter !== "ALL" && c.priority !== priorityFilter) {
@@ -476,14 +468,15 @@ export default function Home() {
       <div className={styles.board_viewport}>
         <Navbar
           boardTitle={activeBoard ? activeBoard.title : "Select a Board"}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
+          boards={boards}
+          setActiveBoardId={setActiveBoardId}
           sidebarCollapsed={sidebarCollapsed}
           setSidebarCollapsed={setSidebarCollapsed}
           priorityFilter={priorityFilter}
           setPriorityFilter={setPriorityFilter}
           dueDateFilter={dueDateFilter}
           setDueDateFilter={setDueDateFilter}
+          onLogout={logout}
         />
 
         {activeBoard ? (

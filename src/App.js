@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./Components/auth/Login.jsx";
 import Signup from "./Components/auth/SingUp";
 import Home from "./Components/Home/Home";
+import NotFound from "./Components/NotFound/NotFound";
 import Cookies from "js-cookie";
 import axios from "axios";
 import { API_BASE_URL } from "./url";
@@ -63,6 +64,7 @@ const App = () => {
         <Route path="/" element={isAuthenticated ? <Navigate to="/home" /> : <Login />} />
         <Route path="/signup" element={isAuthenticated ? <Navigate to="/home" /> : <Signup />} />
         <Route path="/home" element={isAuthenticated ? <Home /> : <Navigate to="/" />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
