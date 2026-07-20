@@ -213,13 +213,6 @@ const Sidebar = ({
         </div>
       </div>
 
-      {/* Sidebar Footer Logout */}
-      <div className={styles.footer}>
-        <button className={styles.logout_btn} onClick={logout} title="Log Out">
-          <FiLogOut size={16} />
-          {!collapsed && <span>Log Out</span>}
-        </button>
-      </div>
     </div>
   );
 };

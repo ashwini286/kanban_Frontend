@@ -77,6 +77,10 @@ const Login = () => {
             </span>
           </div>
 
+          <div className={styles.forgotPasswordLink}>
+            <a href="/forgot-password">Forgot Password?</a>
+          </div>
+
           <button type="submit" className={styles.button} disabled={loading}>
             {loading ? "Logging in..." : "LOGIN"}
           </button>

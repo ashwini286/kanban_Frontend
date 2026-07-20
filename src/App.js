@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./Components/auth/Login.jsx";
 import Signup from "./Components/auth/SingUp";
+import ForgotPassword from "./Components/auth/ForgotPassword";
 import Home from "./Components/Home/Home";
 import NotFound from "./Components/NotFound/NotFound";
 import Cookies from "js-cookie";
@@ -63,6 +64,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={isAuthenticated ? <Navigate to="/home" /> : <Login />} />
         <Route path="/signup" element={isAuthenticated ? <Navigate to="/home" /> : <Signup />} />
+        <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/home" /> : <ForgotPassword />} />
         <Route path="/home" element={isAuthenticated ? <Home /> : <Navigate to="/" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
