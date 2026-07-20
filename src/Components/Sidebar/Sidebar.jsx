@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FiGrid, FiPlus, FiLogOut, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiGrid, FiPlus, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2 } from "react-icons/fi";
 import styles from "./Sidebar.module.css";
 import Cookies from "js-cookie";
 import axios from "axios";
