@@ -320,11 +320,13 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
               <div className={styles.attachments_list}>
                 {attachments.map((att) => {
                   const isImg = att.fileType && att.fileType.startsWith("image/");
+                  // Build full URL: if stored as relative path, prefix with API_BASE_URL
+                  const fullUrl = att.url && att.url.startsWith("/") ? `${API_BASE_URL}${att.url}` : att.url;
                   return (
                     <div key={att.id} className={styles.attachment_card}>
                       {isImg ? (
                         <div className={styles.attachment_thumb_wrapper}>
-                          <img src={att.url} alt={att.name} className={styles.attachment_thumb} />
+                          <img src={fullUrl} alt={att.name} className={styles.attachment_thumb} />
                         </div>
                       ) : (
                         <div className={styles.attachment_file_icon}>📄</div>
@@ -339,7 +341,7 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
                       
                       <div className={styles.attachment_actions}>
                         <a 
-                          href={att.url} 
+                          href={fullUrl} 
                           target="_blank" 
                           rel="noopener noreferrer" 
                           className={styles.download_btn}
