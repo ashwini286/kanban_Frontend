@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -30,8 +30,12 @@ export default function Home() {
   const [dragInfo, setDragInfo] = useState({ cardId: "", sourceColId: "" });
   const [targetInfo, setTargetInfo] = useState({ colId: "", cardId: "" });
 
+  // Flag to skip socket-triggered re-fetch when WE are the ones who triggered the event
+  const skipNextBoardFetch = useRef(false);
+
   const logout = () => {
     Cookies.remove("authToken", { path: "/" });
+    localStorage.removeItem("activeBoardId");
     socket.disconnect();
     window.location.href = "/";
   };
@@ -44,9 +48,16 @@ export default function Home() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBoards(res.data);
-      if (res.data.length > 0 && !activeBoardId) {
-        // default select first board
-        setActiveBoardId(res.data[0]._id || res.data[0].id);
+      if (res.data.length > 0) {
+        // Restore last selected board from localStorage
+        const savedBoardId = localStorage.getItem("activeBoardId");
+        const savedExists = savedBoardId && res.data.some(b => (b._id || b.id) === savedBoardId);
+        if (savedExists) {
+          setActiveBoardId(savedBoardId);
+        } else if (!activeBoardId) {
+          // Default to first board only if none is selected
+          setActiveBoardId(res.data[0]._id || res.data[0].id);
+        }
       }
     } catch (err) {
       console.error("Error fetching boards list:", err);
@@ -69,6 +80,8 @@ export default function Home() {
 
   const notifyBoardChanged = useCallback(() => {
     if (activeBoardId) {
+      // Set flag so our own socket echo is ignored (optimistic state already applied)
+      skipNextBoardFetch.current = true;
       socket.emit("board-changed", { boardId: activeBoardId });
     }
   }, [activeBoardId]);
@@ -91,6 +104,11 @@ export default function Home() {
 
       // Listen for socket events
       socket.on("board-changed", () => {
+        // Skip if we triggered this ourselves (optimistic update already applied)
+        if (skipNextBoardFetch.current) {
+          skipNextBoardFetch.current = false;
+          return;
+        }
         if (activeBoardId) {
           fetchActiveBoardDetails(activeBoardId);
         }
@@ -121,9 +139,10 @@ export default function Home() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Join a board room when selection changes
+  // Join a board room when selection changes + persist to localStorage
   useEffect(() => {
     if (activeBoardId) {
+      localStorage.setItem("activeBoardId", activeBoardId);
       const token = Cookies.get("authToken");
       let userId = "user";
       try {
@@ -371,6 +390,40 @@ export default function Home() {
     setActiveBoard(tempBoard);
     setDragInfo({ cardId: "", sourceColId: "" });
     setTargetInfo({ colId: "", cardId: "" });
+
+    // If card moved to a different column, add activity log entry locally (optimistic)
+    if (sourceColId !== targetColId) {
+      const sourceColTitle = activeBoard.columns[sourceColIndex]?.title || "Unknown";
+      const targetColTitle = activeBoard.columns[targetColIndex]?.title || "Unknown";
+      const activityEntry = {
+        id: Date.now().toString(),
+        action: `Moved card from "${sourceColTitle}" to "${targetColTitle}"`,
+        createdAt: new Date().toISOString()
+      };
+      setActiveBoard(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          columns: prev.columns.map(col => {
+            if (col.id === targetColId) {
+              return {
+                ...col,
+                cards: col.cards.map(c => {
+                  if (c.id === cardId) {
+                    return {
+                      ...c,
+                      activities: [...(c.activities || []), activityEntry]
+                    };
+                  }
+                  return c;
+                })
+              };
+            }
+            return col;
+          })
+        };
+      });
+    }
 
     // Put bulk update to API
     const token = Cookies.get("authToken");
