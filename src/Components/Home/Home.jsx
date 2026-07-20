@@ -397,7 +397,9 @@ export default function Home() {
       const targetColTitle = activeBoard.columns[targetColIndex]?.title || "Unknown";
       const activityEntry = {
         id: Date.now().toString(),
-        action: `Moved card from "${sourceColTitle}" to "${targetColTitle}"`,
+        user: { _id: userId, email: userEmail },
+        actionType: "MOVE",
+        details: { from: sourceColTitle, to: targetColTitle },
         createdAt: new Date().toISOString()
       };
       setActiveBoard(prev => {
