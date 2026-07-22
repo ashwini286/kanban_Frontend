@@ -97,6 +97,7 @@ const BoardArea = ({ board, addCard, removeCard, updateCard, addColumn, deleteCo
             updateCard(colId, cardId, data);
             setActiveTask(prev => ({ ...prev, ...data }));
           }}
+          removeCard={removeCard}
         />
       )}
     </div>

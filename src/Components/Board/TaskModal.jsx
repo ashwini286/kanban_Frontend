@@ -5,7 +5,7 @@ import axios from "axios";
 import { API_BASE_URL } from "../../url.js";
 import styles from "./TaskModal.module.css";
 
-const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
+const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard, removeCard }) => {
   const [title, setTitle] = useState(card.title || "");
   const [description, setDescription] = useState(card.description || "");
   const [priority, setPriority] = useState(card.priority || "LOW");
@@ -476,6 +476,20 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
                   }}
                 />
               </div>
+
+              {/* Delete Task */}
+              <button 
+                className={styles.delete_task_btn}
+                onClick={() => {
+                  if (window.confirm("Are you sure you want to delete this task?")) {
+                    removeCard(card.id);
+                    onClose();
+                  }
+                }}
+              >
+                <FiTrash2 size={14} />
+                <span>Delete Task</span>
+              </button>
             </div>
           </div>
         </div>
