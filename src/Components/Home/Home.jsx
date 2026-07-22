@@ -130,10 +130,15 @@ export default function Home() {
     };
   }, [navigate, activeBoardId, fetchActiveBoardDetails]);
 
-  // Handle window resizing to collapse sidebar on smaller screens
+  // Handle window resizing to collapse sidebar only when crossing the mobile breakpoint
   useEffect(() => {
+    let wasMobile = window.innerWidth < 768;
     const handleResize = () => {
-      setSidebarCollapsed(window.innerWidth < 768);
+      const isMobile = window.innerWidth < 768;
+      if (isMobile !== wasMobile) {
+        setSidebarCollapsed(isMobile);
+        wasMobile = isMobile;
+      }
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
