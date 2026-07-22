@@ -46,7 +46,9 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard }) => {
   };
 
   const handleBlur = () => {
-    handleSave();
+    if (title !== (card.title || "") || description !== (card.description || "")) {
+      handleSave();
+    }
   };
 
   const addSubtask = (e) => {
