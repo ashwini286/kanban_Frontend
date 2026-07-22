@@ -482,7 +482,7 @@ const TaskModal = ({ card, columnId, columnTitle, onClose, updateCard, removeCar
                 className={styles.delete_task_btn}
                 onClick={() => {
                   if (window.confirm("Are you sure you want to delete this task?")) {
-                    removeCard(card.id);
+                    removeCard(columnId, card.id);
                     onClose();
                   }
                 }}
