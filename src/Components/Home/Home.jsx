@@ -150,7 +150,7 @@ export default function Home() {
         userId = payload.id;
       } catch(e){}
 
-      socket.emit("join-board", { boardId: activeBoardId, userId });
+      socket.emit("join-board", activeBoardId);
       fetchActiveBoardDetails(activeBoardId);
     }
   }, [activeBoardId, fetchActiveBoardDetails]);
